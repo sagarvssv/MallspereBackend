@@ -1,6 +1,6 @@
 
 import express from "express";
-import { userLogin, userRegister, VerifyOtp, otpResend, userLogout,forgotPassword,reSetPassword,changePassword } from "../controllers/authUseRegister.js";
+import { userLogin, userRegister, VerifyOtp, otpResend, userLogout,forgotPassword,reSetPassword,changePassword, refreshTokenHandler } from "../controllers/authUseRegister.js";
 import { userProfileUpload } from "../middlewares/Multer.js";
 import rateLimit from "express-rate-limit";
 import userAuth from "../middlewares/userauth.js";
@@ -21,6 +21,7 @@ userRouter.post('/login',authLimiter,userLogin);
 userRouter.post('/verify-user-otp',authLimiter,VerifyOtp)
 userRouter.post('/resend-otp',authLimiter,otpResend)
 userRouter.post('/user-logout',userAuth, userLogout)
+userRouter.get('/refresh-token',refreshTokenHandler)
 
 //passwords
 

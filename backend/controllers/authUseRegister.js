@@ -357,5 +357,50 @@ const changePassword = async (req, res) => {
 }
 
 
+const refreshTokenHandler = async (req, res) => {
+  try {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
 
-export { userRegister, userLogin, userLogout, VerifyOtp, otpResend, forgotPassword, reSetPassword, changePassword };
+    if (!refreshTokenFromCookie) {
+      return res.status(401).json({ message: "Access token expired, please login again" });
+    }
+
+    const user = await UserModel.findOne({ token: refreshTokenFromCookie });
+    if (!user) {
+      return res.status(401).json({ message: "Access token expired, please login again" });
+    }
+
+    // Generate new tokens
+    const newAccessToken = accessToken(user._id);
+    const newRefreshToken = refreshToken(user._id);
+
+    // Save new refresh token in DB
+    user.token = newRefreshToken;
+    await user.save();
+
+    // Set cookies
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "Token refreshed successfully" });
+  } catch (error) {
+    console.error("Refresh Token Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
+
+
+export { userRegister, userLogin, userLogout, VerifyOtp, otpResend, forgotPassword, reSetPassword, changePassword, refreshTokenHandler };
