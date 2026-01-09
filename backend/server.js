@@ -22,18 +22,21 @@ app.set("trust proxy", 1);
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   process.env.CLIENT_URL
-];
+].filter(Boolean);
+
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error(`CORS blocked: ${origin}`));
     }
   },
   credentials: true
 }));
+
 connectDB();
 
 // Static files
