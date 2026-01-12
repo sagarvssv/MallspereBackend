@@ -1,23 +1,12 @@
-import resend from "../config/mail.js";
+import resend from "../config/resend.js";
 
-const reSendOtp = async (to, otp) => {
-  try {
-    await resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to,
-      subject: "Your OTP Verification Code",
-      html: `
-        <div style="font-family: Arial;">
-          <h2>Email Verification</h2>
-          <p>Your OTP is:</p>
-          <h1 style="color:#4CAF50">${otp}</h1>
-          <p>This OTP is valid for 10 minutes.</p>
-        </div>
-      `,
-    });
-  } catch (error) {
-    console.error("Resend OTP error:", error.message);
-  }
+const resendOtp = async (email, otp) => {
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: "Resent OTP Code",
+    html: `<h2>Your OTP: ${otp}</h2>`,
+  });
 };
 
-export default reSendOtp;
+export default resendOtp;

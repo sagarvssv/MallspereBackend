@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import userRouter from "./routes/userRoute.js";
 import connectDB from "./config/db.js";
 import helmet from "helmet";
+import vendorRouter from "./routes/vendorRoute.js";
 
 
 const app = express();
@@ -36,7 +37,6 @@ app.use(cors({
   },
   credentials: true
 }));
-
 connectDB();
 
 // Static files
@@ -44,6 +44,7 @@ app.use("/uploads", express.static("uploads"));
 
 // Routes 
 app.use("/api/auth", userRouter); 
+app.use('/api/auth',vendorRouter)
 
 // Test route
 app.get("/", (req, res) => {
