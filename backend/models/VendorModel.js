@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+  import mongoose from "mongoose";
 
 const vendorSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -11,9 +11,12 @@ const vendorSchema = new mongoose.Schema({
   isEmailVerified: { type: Boolean, default: false },
   isLoggedIn: { type: Boolean, default: false },
 
-  otp: { type: String, required: true },
+  otp: { type: String, required: false },
   otpExpiry: { type: Date, default: null },
   token: { type: String, default: "" },
+  otpLastSentAt: { type: Date, default: null },
+  otpLastSent: { type: Boolean, default: null },
+  otpResendCount: { type: Number, default: 0 },
 
   isSubscribed: { type: Boolean, default: false },
   plan: { type: String, enum: ["free", "premium"], default: "free" },

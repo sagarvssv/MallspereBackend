@@ -120,14 +120,14 @@ const userLogin = async (req, res) => {
     // 6 Set cookies
     res.cookie("accessToken", accessTokens, {
       httpOnly: true,
-       secure: isProd,
-  sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
     });
     res.cookie("refreshToken", refreshTokens, {
       httpOnly: true,
-       secure: isProd,
-  sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     // 7 Final response
@@ -165,7 +165,7 @@ const userLogout = async (req, res) => {
     const cookieOptions = {
       httpOnly: true,
       secure: isProd,
-  sameSite: isProd ? "none" : "lax",
+      sameSite: isProd ? "none" : "lax",
     };
 
     // clear cookies
