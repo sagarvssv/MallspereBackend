@@ -5,14 +5,15 @@ import {userProfileUpload}  from "../middlewares/Multer.js";
 const vendorRouter = express.Router();
 
 
-vendorRouter.post('/vendor-register',  userProfileUpload.fields([
+vendorRouter.post(
+  "/vendor-register",
+  userProfileUpload.fields([
     { name: "profile", maxCount: 1 },
-    { name: "image1", maxCount: 1 },
-    { name: "image2", maxCount: 1 },
-    { name: "image3", maxCount: 1 },
-    { name: "image4", maxCount: 1 },
-    { name: "image5", maxCount: 1 }
-  ]),vendorRegister);
+    { name: "vendorShopImages", maxCount: 10 }
+  ]),
+  vendorRegister
+);
+
 
 vendorRouter.post('/vendor-login',vendorLogin)
 vendorRouter.post('/vendor-logout',vendorLogout)
