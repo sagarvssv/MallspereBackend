@@ -5,6 +5,7 @@ import VendorModel from "../models/VendorModel.js";
 import generateOtp from "../utils/generateOtp.js";
 import sendMailOtp from "../utils/sendMailOtp.js";
 import { accessToken,refreshToken } from "../utils/generateToken.js";
+import { generateShopId, generateVendorId } from "../utils/IdGenerator.js";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -99,8 +100,24 @@ const vendorRegister = async (req, res) => {
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
+    //generate Ids
+    const vendorId = generateVendorId(shopName);
+    //stall need Approval
+    const shops =[]
+    for(let i=0;i<vendorShopNumberOfStalls;i++){
+      shops.push({
+        shopId:generateShopId(shopName),
+        shopName:`${shopName} stall ${i+1}`,
+        approvalStatus:"pending",
+        rejectedReason:"",
+        isActive:false
+      })
+    }
+
+
     // 🔹 CREATE VENDOR
     const vendor = await VendorModel.create({
+      vendorId,
       name,
       email,
       password: hashedPassword,
@@ -123,6 +140,7 @@ const vendorRegister = async (req, res) => {
       approvedShopStatus: "pending",
       isSubscribed: false,
       plan: "free",
+      shops,      
     });
 
     // 🔹 SEND OTP
@@ -130,7 +148,8 @@ const vendorRegister = async (req, res) => {
 
     res.status(201).json({
       message: "Vendor registered successfully. OTP sent.",
-      vendorId: vendor._id,
+      vendorId: vendor.vendorId,
+      totalStalls:vendor.shops.length      
     });
   } catch (error) {
     console.error("Vendor Register Error:", error);
@@ -173,7 +192,7 @@ try {
 
    res.cookie("refreshToken",refreshTokens,{
     httpOnly:true,
-    secured:isProd,
+    secure:isProd,
     sameSite:isProd ? "none":"lax",
     maxAge:15*60*1000
    });
@@ -247,14 +266,53 @@ const vendorVerifyOtp = async (req, res) => {
   }
 };
 
+const vendorResendOtp = async (req, res) => {
+  try {
+    
+    const { email, vendorLicenseNumber } = req.body;
+    console.log("Request body:", req.body);
+
+    if (!email || !vendorLicenseNumber) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const vendor = await VendorModel.findOne({ email, vendorLicenseNumber });
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    // if (vendor.isEmailVerified) {
+    //   return res.status(400).json({ message: "Vendor already verified" });
+    // }
+    if(vendor.otpLastSentAt && vendor.otpLastSentAt + 10*60*1000 > Date.now()){
+        return res.status(429).json({ message: "Please wait before sending another OTP" });
+    }
+    else{
+        const otp = generateOtp();
+        await sendMailOtp(vendor.email, otp);
+        vendor.otp = otp;
+        vendor.otpExpiry = Date.now() + 10 * 60 * 1000;
+        vendor.otpLastSent = true;
+        vendor.otpLastSentAt = Date.now();
+        //vendor.isVerified = false;
+        vendor.otpResendCount = vendor.otpResendCount + 1;
+        await vendor.save();
+        res.status(200).json({ message: "OTP resent successfully" });
+    }
+  } catch (error) {
+    console.error("Vendor Resend Otp Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
 
 const  vendorResetPassword = async(req,res)=>{
   try {
       const {email,otp,newPassword,confirmPassword} = req.body
-    if(!email,!otp,!newPassword,!confirmPassword){
+    if(!email ||!otp || !newPassword || !confirmPassword){
         return res.status(400).json({message:"All fields are required"})
     }
-    const vendor = await VendorModel.findOne({$or:[{email},{vendorLicenseNumber}]})
+    const vendor = await VendorModel.findOne({email})
     if(!vendor){
         return res.status(404).json({message:"Vendor not found"})
     }
@@ -302,7 +360,94 @@ const forgotPassword=async(req,res)=>{
  }
 }
 
+const vendorChangePassword = async (req, res) => {
+  try {
+        // Debug logs
+    // console.log('=== Change Password Debug ===');
+    // console.log('Headers:', req.headers);
+    // console.log('Content-Type:', req.headers['content-type']);
+    // console.log('req.body:', req.body);
+    // console.log('req.userId:', req.userId);
+    // console.log('========================');
+    const { oldPassword, newPassword, confirmPassword } = req.body 
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const vendor = await VendorModel.findById(req.userId);
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, vendor.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password too short" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    vendor.password = await bcrypt.hash(newPassword, 10);
+    await vendor.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+const vendorRefreshToken = async (req, res) => {
+  try {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
+    if (!refreshTokenFromCookie) {
+      return res.status(401).json({ message: "Refresh token missing, please login again" });
+    }
+
+    // Use the correct variable here
+    const vendor = await VendorModel.findOne({ token: refreshTokenFromCookie });
+    if (!vendor) {
+      return res.status(401).json({ message: "Unauthorized, invalid refresh token" });
+    }
+
+    // Generate new tokens
+    const newAccessToken = accessToken(vendor._id);
+    const newRefreshToken = refreshToken(vendor._id);
+
+    // Save new refresh token in DB
+    vendor.token = newRefreshToken;
+    await vendor.save();
+
+    // Set cookies
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 15 * 60 * 1000
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(200).json({ message: "Token refreshed successfully" });
+
+  } catch (error) {
+    console.error("Refresh Token Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
 
 
 
-export { vendorRegister, vendorLogin, vendorLogout, vendorVerifyOtp, vendorResetPassword, forgotPassword };
+export { vendorRegister, vendorLogin, vendorLogout, vendorVerifyOtp, vendorResetPassword, forgotPassword, vendorRefreshToken, vendorChangePassword,vendorResendOtp };

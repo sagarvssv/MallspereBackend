@@ -1,42 +1,94 @@
-  import mongoose from "mongoose";
+import mongoose from "mongoose";
 
-const vendorSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true, index: true },
-  profile: { type: String, default: "" },
-  password: { type: String, required: true },
-  location: { type: String, required: true },
-  role: { type: String, enum: ["vendor", "seller", "superadmin", "user"], default: "vendor" },
+const vendorSchema = new mongoose.Schema(
+  {
+    // 🔹 UNIQUE VENDOR (MALL OWNER) ID
+    vendorId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
 
-  isEmailVerified: { type: Boolean, default: false },
-  isLoggedIn: { type: Boolean, default: false },
+    // 🔹 BASIC INFO
+    name: { type: String, required: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
+    profile: { type: String, default: "" },
+    password: { type: String, required: true },
+    location: { type: String, required: true },
 
-  otp: { type: String, required: false },
-  otpExpiry: { type: Date, default: null },
-  token: { type: String, default: "" },
-  otpLastSentAt: { type: Date, default: null },
-  otpLastSent: { type: Boolean, default: null },
-  otpResendCount: { type: Number, default: 0 },
+    role: {
+      type: String,
+      enum: ["vendor", "seller", "superadmin", "user"],
+      default: "vendor"
+    },
 
-  isSubscribed: { type: Boolean, default: false },
-  plan: { type: String, enum: ["free", "premium"], default: "free" },
+    // 🔹 AUTH & OTP
+    isEmailVerified: { type: Boolean, default: false },
+    isLoggedIn: { type: Boolean, default: false },
 
-  shopName: { type: String, required: true },
-  vendorShopAddress: { type: String, required: true },
-  vendorContactNumber: { type: String, required: true },
-  vendorShopImages: { type: [String], required: true },
+    otp: { type: String },
+    otpExpiry: { type: Date },
+    token: { type: String, default: "" },
+    otpLastSentAt: { type: Date, default: null },
+    otpLastSent: { type: Boolean, default: false },
+    otpResendCount: { type: Number, default: 0 },
 
-  vendorLicenseNumber: { type: String, required: true },
-  vendorShopNumberOfFloors: { type: Number, required: true },
-  vendorShopNumberOfStalls: { type: Number, required: true },
-  vendorShopOpeningTime: { type: String, required: true },
-  vendorShopClosingTime: { type: String, required: true },
-  vendorShopDescription: { type: String, required: true },
+    // 🔹 SUBSCRIPTION
+    isSubscribed: { type: Boolean, default: false },
+    plan: {
+      type: String,
+      enum: ["free", "premium"],
+      default: "free"
+    },
 
-  approvedShopStatus: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-  rejectedReason: { type: String, default: "" }
+    // 🔹 MALL / SHOP INFO
+    shopName: { type: String, required: true },
+    vendorShopAddress: { type: String, required: true },
+    vendorContactNumber: { type: String, required: true },
+    vendorShopImages: { type: [String], required: true },
 
-}, { timestamps: true });
+    vendorLicenseNumber: { type: String, required: true },
+    vendorShopNumberOfFloors: { type: Number, required: true },
+    vendorShopNumberOfStalls: { type: Number, required: true },
+    vendorShopOpeningTime: { type: String, required: true },
+    vendorShopClosingTime: { type: String, required: true },
+    vendorShopDescription: { type: String, required: true },
 
-const VendorModel = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
+    // 🔹 STALLS (EACH NEEDS ADMIN APPROVAL)
+    shops: [
+      {
+        shopId: { type: String, required: true },
+        shopName: { type: String, required: true },
+
+        approvalStatus: {
+          type: String,
+          enum: ["pending", "approved", "rejected"],
+          default: "pending"
+        },
+
+        rejectedReason: {
+          type: String,
+          default: ""
+        },
+
+        isActive: {
+          type: Boolean,
+          default: false
+        }
+      }
+    ],
+    //Events
+  },
+  { timestamps: true }
+);
+
+const VendorModel =
+  mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
+
 export default VendorModel;

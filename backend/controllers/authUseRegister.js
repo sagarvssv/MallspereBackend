@@ -230,9 +230,9 @@ const otpResend = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.isVerified) {
-      return res.status(400).json({ message: "User already verified" });
-    }
+    // if (user.isVerified) {
+    //   return res.status(400).json({ message: "User already verified" });
+    // }
 
     if (user.otpLastSentAt && Date.now() - user.otpLastSentAt < 60 * 1000) {
       return res.status(429).json({ message: "Please wait before sending another OTP" });
@@ -244,7 +244,7 @@ const otpResend = async (req, res) => {
       user.otpExpiry = Date.now() + 10 * 60 * 1000;
       user.otpLastSent = true;
       user.otpLastSentAt = Date.now();
-      user.isVerified = false;
+      //user.isVerified = false;
       user.otpResendCount = user.otpResendCount + 1;
       await user.save();
       res.status(200).json({ message: "OTP Resent successfully" });
