@@ -129,6 +129,8 @@ const superAdminLogin = async (req, res) => {
         if (!validator.isStrongPassword(password)) {
             return res.status(400).json({ message: "Password must be at least 6 please match the password policy" })
         }
+        if(!superAdmin.isVerified) return res.status(400).json({message:"Super Admin not verified"});
+        if(!superAdmin.isEmailVerified) return res.status(400).json({message:"Super Admin not verified"});
         const superAdmin = await SuperAdminModel.findOne({ email })
         if (!superAdmin) {
             return res.status(404).json({ message: "Super Admin not found" })
