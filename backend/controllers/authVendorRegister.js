@@ -16,7 +16,7 @@ const vendorRegister = async (req, res) => {
       email,
       password,
       location,
-      shopName,
+      mallName,
       shopAddress,
       phoneNumber,
       vendorLicenseNumber,
@@ -33,7 +33,7 @@ const vendorRegister = async (req, res) => {
       !email ||
       !password ||
       !location ||
-      !shopName ||
+      !mallName ||
       !shopAddress ||
       !phoneNumber ||
       !vendorLicenseNumber ||
@@ -66,6 +66,9 @@ const vendorRegister = async (req, res) => {
     if (existingVendor) {
       return res.status(409).json({ message: "Vendor already exists" });
     }
+
+    // 🔹 EMAIL VERIFICATION
+    if(existingVendor && !existingVendor.isEmailVerified) return res.status(400).json({message:"Email already exists, please verify your email"});
 
     // 🔹 PROFILE IMAGE
     const profileFile = req.files?.profile?.[0];
@@ -101,18 +104,18 @@ const vendorRegister = async (req, res) => {
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     //generate Ids
-    const vendorId = generateVendorId(shopName);
+    const vendorId = generateVendorId(mallName);
     //stall need Approval
-    const shops =[]
-    for(let i=0;i<vendorShopNumberOfStalls;i++){
-      shops.push({
-        shopId:generateShopId(shopName),
-        shopName:`${shopName} stall ${i+1}`,
-        approvalStatus:"pending",
-        rejectedReason:"",
-        isActive:false
-      })
-    }
+    // const shops =[]
+    // for(let i=0;i<vendorShopNumberOfStalls;i++){
+    //   shops.push({
+    //     shopId:generateShopId(shopName),
+    //     shopName:`${shopName} stall ${i+1}`,
+    //     approvalStatus:"pending",
+    //     rejectedReason:"",
+    //     isActive:false
+    //   })
+    // }
 
 
     // 🔹 CREATE VENDOR
@@ -122,7 +125,7 @@ const vendorRegister = async (req, res) => {
       email,
       password: hashedPassword,
       location,
-      shopName,
+      mallName,
       vendorShopAddress: shopAddress,
       vendorContactNumber: phoneNumber,
       vendorLicenseNumber,
@@ -141,7 +144,7 @@ const vendorRegister = async (req, res) => {
       mallAdminApproval: "pending",
       isSubscribed: false,
       plan: "free",
-      shops,      
+      shops: [],      
     });
 
     // 🔹 SEND OTP

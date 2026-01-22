@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 
-const generateVendorId = (shopName) => {
-    const prefix = shopName
+const generateVendorId = (mallName) => {
+    const prefix = mallName
     .replace(/\s+/g, "").substring(0, 5).toUpperCase();
     return `MS-${prefix}-${nanoid(6).toUpperCase()}`
 };

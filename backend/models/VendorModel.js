@@ -48,7 +48,7 @@ const vendorSchema = new mongoose.Schema(
     },
 
     // 🔹 MALL / SHOP INFO
-    shopName: { type: [String], required: true },
+    mallName: { type: [String], required: true },
     vendorShopAddress: { type: String, required: true },
     vendorContactNumber: { type: String, required: true },
     vendorShopImages: { type: [String], required: true },
