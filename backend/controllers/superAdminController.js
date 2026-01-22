@@ -232,14 +232,8 @@ const superAdminVerifyOtp = async(req,res)=>{
         if(!superAdmin){
             return res.status(404).json({message:"Super Admin not found"})
         }
-        if(!superAdmin.isVerified){
-            return res.status(400).json({message:"Super Admin not verified yet please verify your account"})
-          
-        }
-        if(!superAdmin.isEmailVerified){
-            return res.status(400).json({message:"Super Admin email not verified yet please verify your account"})
-          
-        }
+    
+        
         if(superAdmin.isVerified){
             return res.status(400).json({message:"Super Admin already verified"})
         }
