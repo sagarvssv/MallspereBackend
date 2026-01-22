@@ -32,6 +32,10 @@ const superAdminSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+      token: {
+        type: String,
+        default: ""
+    },
     otpExpiry: {
         type: Date,
         default: null

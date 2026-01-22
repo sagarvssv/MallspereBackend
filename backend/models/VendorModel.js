@@ -48,7 +48,7 @@ const vendorSchema = new mongoose.Schema(
     },
 
     // 🔹 MALL / SHOP INFO
-    shopName: { type: String, required: true },
+    shopName: { type: [String], required: true },
     vendorShopAddress: { type: String, required: true },
     vendorContactNumber: { type: String, required: true },
     vendorShopImages: { type: [String], required: true },
@@ -59,6 +59,27 @@ const vendorSchema = new mongoose.Schema(
     vendorShopOpeningTime: { type: String, required: true },
     vendorShopClosingTime: { type: String, required: true },
     vendorShopDescription: { type: String, required: true },
+
+    // 🔹 ADMIN APPROVAL
+    vendorAdminApproval: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    vendorAdminRejectedReason: { type: String, default: "" },
+    vendorAdminApprovedby: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SuperAdmin",
+      default: null
+    },
+    vendorAdminApprovedAt: {
+      type: Date,
+      default: null
+    },
+    vendorAdminRejectedAt: {
+      type: Date,
+      default: null
+    },
+    vendorAdminIsActive: {
+      type: Boolean,
+      default: false
+    },
 
     // 🔹 STALLS (EACH NEEDS ADMIN APPROVAL)
     shops: [
@@ -83,6 +104,7 @@ const vendorSchema = new mongoose.Schema(
         }
       }
     ],
+
     //Events
   },
   { timestamps: true }

@@ -138,6 +138,7 @@ const vendorRegister = async (req, res) => {
       otpExpiry,
       isEmailVerified: false,
       approvedShopStatus: "pending",
+      mallAdminApproval: "pending",
       isSubscribed: false,
       plan: "free",
       shops,      
@@ -149,7 +150,8 @@ const vendorRegister = async (req, res) => {
     res.status(201).json({
       message: "Vendor registered successfully. OTP sent.",
       vendorId: vendor.vendorId,
-      totalStalls:vendor.shops.length      
+      totalStalls:vendor.shops.length,
+      mallAdminApproval:vendor.mallAdminApproval    
     });
   } catch (error) {
     console.error("Vendor Register Error:", error);
@@ -176,6 +178,22 @@ try {
 
     if(!vendor.isEmailVerified){
         return res.status(401).json({message:"Please verify your account first"})
+    }
+
+    //  CHECK APPROVAL STATUS
+    if (vendor.vendorAdminApproval === "pending") {
+      return res.status(403).json({
+        message: "Your account is pending approval by the administrator",
+        status: "pending"
+      });
+    }
+
+    if (vendor.vendorAdminApproval === "rejected") {
+      return res.status(403).json({
+        message: "Your account has been rejected",
+        status: "rejected",
+        reason: vendor.vendorAdminRejectedReason
+      });
     }
    const accessTokens = accessToken(vendor._id)
    const refreshTokens = refreshToken(vendor._id)
@@ -450,4 +468,11 @@ const vendorRefreshToken = async (req, res) => {
 
 
 
-export { vendorRegister, vendorLogin, vendorLogout, vendorVerifyOtp, vendorResetPassword, forgotPassword, vendorRefreshToken, vendorChangePassword,vendorResendOtp };
+
+
+
+export { vendorRegister, vendorLogin,
+   vendorLogout, vendorVerifyOtp, 
+   vendorResetPassword, forgotPassword,
+    vendorRefreshToken, vendorChangePassword,
+     vendorResendOtp };

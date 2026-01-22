@@ -33,5 +33,7 @@ vendorRouter.post('/vendor-reset-password',authLimiter,vendorResetPassword)
 vendorRouter.post('/vendor-forgot-password',authLimiter,forgotPassword)
 vendorRouter.post('/vendor-change-password',authLimiter,vendorauth,vendorChangePassword)
 
+//approved status
+
 
 export default vendorRouter
