@@ -97,7 +97,7 @@ const superAdminRegister = async (req, res) => {
         });
 
         // 🔹 SEND OTP
-        await sendOtpMail(email, otp);
+        await sendMailOtp(email, otp);
 
         res.status(201).json({
             success: true,
