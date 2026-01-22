@@ -6,6 +6,7 @@ import validator from "validator";
 import sendMailVendorApproved from "../utils/sendMailVendorApproved.js";
 import { accessToken, refreshToken } from "../utils/generateToken.js";
 import VendorModel from "../models/VendorModel.js";
+import sendMailVendorReject from "../utils/sendMailVendorReject.js";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -553,7 +554,7 @@ const superAdminRejectVendor = async (req, res) => {
     vendor.vendorAdminRejectedAt = new Date();
     vendor.vendorAdminApprovedAt = null;
     await vendor.save();
-    // await sendMailVendorRejected(vendor.email, vendor.name);
+    await sendMailVendorReject(vendor.email, vendor.name);
     res.status(200).json({
       success: true,
       message: "Vendor rejected successfully",
