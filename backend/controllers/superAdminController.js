@@ -232,6 +232,14 @@ const superAdminVerifyOtp = async(req,res)=>{
         if(!superAdmin){
             return res.status(404).json({message:"Super Admin not found"})
         }
+        if(!superAdmin.isVerified){
+            return res.status(400).json({message:"Super Admin not verified yet please verify your account"})
+          
+        }
+        if(!superAdmin.isEmailVerified){
+            return res.status(400).json({message:"Super Admin email not verified yet please verify your account"})
+          
+        }
         if(superAdmin.isVerified){
             return res.status(400).json({message:"Super Admin already verified"})
         }
@@ -242,6 +250,7 @@ const superAdminVerifyOtp = async(req,res)=>{
             return res.status(400).json({message:"Invalid OTP"})
         }
         superAdmin.isEmailVerified = true;
+        superAdmin.isVerified = true;
         superAdmin.otp = null;
         superAdmin.otpExpiry = null;
         await superAdmin.save();
