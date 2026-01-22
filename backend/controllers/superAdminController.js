@@ -241,7 +241,7 @@ const superAdminVerifyOtp = async(req,res)=>{
         if(String(superAdmin.otp) !== String(otp)){
             return res.status(400).json({message:"Invalid OTP"})
         }
-        superAdmin.isVerified = true;
+        superAdmin.isEmailVerified = true;
         superAdmin.otp = null;
         superAdmin.otpExpiry = null;
         await superAdmin.save();
