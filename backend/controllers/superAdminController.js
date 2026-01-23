@@ -118,64 +118,69 @@ const superAdminRegister = async (req, res) => {
 };
 
 const superAdminLogin = async (req, res) => {
-    try {
-        const { email, password } = req.body
-        if (!email || !password) {
-            return res.status(400).json({ message: "All fields are required" })
-        }
-        if (!validator.isEmail(email)) {
-            return res.status(400).json({ message: "Invalid email format" })
-        }
-        if (!validator.isStrongPassword(password)) {
-            return res.status(400).json({ message: "Password must be at least 6 please match the password policy" })
-        }
-        if(!superAdmin.isVerified && !superAdmin.isEmailVerified) return res.status(400).json({message:"Super Admin not verified yet please verify your  account first"});
-        const superAdmin = await SuperAdminModel.findOne({ email })
-        if (!superAdmin) {
-            return res.status(404).json({ message: "Super Admin not found" })
-        }
-        const isMatch = await bcrypt.compare(password, superAdmin.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Password is incorrect" });
-        }
+  try {
+    const { email, password } = req.body;
 
-
-        // 5 Generate tokens
-        const accessTokens = accessToken(superAdmin._id);
-        const refreshTokens = refreshToken(superAdmin._id);
-
-
-        superAdmin.token = refreshTokens;
-        superAdmin.isLoggedIn = true;
-        await superAdmin.save();
-        res.cookie("accessToken", accessTokens, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
-        });
-        res.cookie("refreshToken", refreshTokens, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
-        });
-        // 6 Send response
-
-        res.status(200).json({
-            success: true,
-            message: "Super Admin logged in successfully",
-            accessToken,
-            refreshToken,
-            superAdmin: {
-                id: superAdmin._id,
-                name: superAdmin.name,
-                email: superAdmin.email,
-            },
-        });
-    } catch (error) {
-        console.error("Super Admin Login Error:", error);
-        res.status(500).json({ message: "Server Error" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-}
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const superAdmin = await SuperAdminModel.findOne({ email });
+    if (!superAdmin) {
+      return res.status(404).json({ message: "Super Admin not found" });
+    }
+
+    if (!superAdmin.isVerified || !superAdmin.isEmailVerified) {
+      return res.status(400).json({
+        message: "Super Admin not verified yet, please verify your account first",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, superAdmin.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Password is incorrect" });
+    }
+
+    const accessTokenValue = accessToken(superAdmin._id);
+    const refreshTokenValue = refreshToken(superAdmin._id);
+
+    superAdmin.token = refreshTokenValue;
+    superAdmin.isLoggedIn = true;
+    await superAdmin.save();
+
+    res.cookie("accessToken", accessTokenValue, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+    });
+
+    res.cookie("refreshToken", refreshTokenValue, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Super Admin logged in successfully",
+      accessToken: accessTokenValue,
+      refreshToken: refreshTokenValue,
+      superAdmin: {
+        id: superAdmin._id,
+        name: superAdmin.name,
+        email: superAdmin.email,
+      },
+    });
+  } catch (error) {
+    console.error("Super Admin Login Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 
  
 const superAdminLogout = async(req,res)=>{
