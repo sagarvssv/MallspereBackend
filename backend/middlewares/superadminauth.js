@@ -1,26 +1,38 @@
-
 import jwt from "jsonwebtoken";
-
 
 const superadminauth = (req, res, next) => {
   try {
     const token = req.cookies.accessToken;
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    if (!token) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        code: "NO_ACCESS_TOKEN",
+      });
+    }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
-          return res.status(401).json({ message: "Access token expired" });
+          return res.status(401).json({
+            message: "Access token expired",
+            code: "ACCESS_TOKEN_EXPIRED",
+          });
         }
-        return res.status(401).json({ message: "Invalid token" });
+
+        return res.status(401).json({
+          message: "Invalid token",
+          code: "INVALID_ACCESS_TOKEN",
+        });
       }
+
       req.userId = decoded.id;
       next();
     });
   } catch (error) {
     console.error("Auth middleware error:", error);
-    res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 
-export default superadminauth
+export default superadminauth;

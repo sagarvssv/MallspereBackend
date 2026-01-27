@@ -8,7 +8,7 @@ import { accessToken, refreshToken } from "../utils/generateToken.js";
 import VendorModel from "../models/VendorModel.js";
 import sendMailVendorReject from "../utils/sendMailVendorReject.js";
 
-const isProd = process.env.NODE_ENV === "production";
+    const isProd = process.env.NODE_ENV === "production";
 
 const superAdminRegister = async (req, res) => {
     try {
@@ -153,22 +153,24 @@ const superAdminLogin = async (req, res) => {
     await superAdmin.save();
 
     res.cookie("accessToken", accessTokenValue, {
-      httpOnly: true,
+       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
+      path: "/",
     });
 
     res.cookie("refreshToken", refreshTokenValue, {
-      httpOnly: true,
+       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
+      path: "/",
     });
 
     res.status(200).json({
       success: true,
       message: "Super Admin logged in successfully",
-      accessToken: accessTokenValue,
-      refreshToken: refreshTokenValue,
+      // accessToken: accessTokenValue,
+      // refreshToken: refreshTokenValue,
       superAdmin: {
         id: superAdmin._id,
         name: superAdmin.name,
@@ -424,13 +426,15 @@ const superAdminrefreshTokenHandler = async (req, res) => {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-      maxAge: 15 * 60 * 1000,
+        path: "/",
+      maxAge: 24 * 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
+        path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -520,7 +524,6 @@ const superAdminApproveVendor = async (req, res) => {
     message: "Vendor is already approved",
   });
 }
-
 
 
 
