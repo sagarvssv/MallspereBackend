@@ -7,114 +7,115 @@ import sendMailVendorApproved from "../utils/sendMailVendorApproved.js";
 import { accessToken, refreshToken } from "../utils/generateToken.js";
 import VendorModel from "../models/VendorModel.js";
 import sendMailVendorReject from "../utils/sendMailVendorReject.js";
+import { generateLicenseId } from "../utils/IdGenerator.js";
 
-    const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === "production";
 
 const superAdminRegister = async (req, res) => {
-    try {
-        let { name, email, password } = req.body;
+  try {
+    let { name, email, password } = req.body;
 
-        // 🔹 TRIM DATA
-        name = name?.trim();
-        email = email?.trim().toLowerCase();
-        password = password?.trim();
+    // 🔹 TRIM DATA
+    name = name?.trim();
+    email = email?.trim().toLowerCase();
+    password = password?.trim();
 
-        // 🔹 BASIC REQUIRED CHECK
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required",
-            });
-        }
-
-        // 🔹 NAME VALIDATION
-        if (!validator.isLength(name, { min: 3 })) {
-            return res.status(400).json({
-                success: false,
-                message: "Name must be at least 3 characters",
-            });
-        }
-
-        // 🔹 EMAIL VALIDATION
-        if (!validator.isEmail(email)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid email format",
-            });
-        }
-
-        // 🔹 PASSWORD VALIDATION
-        if (
-            !validator.isStrongPassword(password, {
-                minLength: 6,
-                minLowercase: 1,
-                minUppercase: 1,
-                minNumbers: 1,
-                minSymbols: 1,
-            })
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Password must be at least 6 please match the password policy",
-            });
-        }
-
-        // 🔹 DUPLICATE CHECK
-        const existingAdmin = await SuperAdminModel.findOne({ email });
-        if (existingAdmin) {
-            return res.status(409).json({
-                success: false,
-                message: "Admin already exists",
-            });
-        }
-
-        // 🔹 SUPER ADMIN LIMIT
-        const superAdminCount = await SuperAdminModel.countDocuments();
-        if (superAdminCount >= 2) {
-            return res.status(403).json({
-                success: false,
-                message: "Super Admin limit reached",
-            });
-        }
-
-        // 🔹 HASH PASSWORD
-        const hashpassword = await bcrypt.hash(password, 10);
-
-        // 🔹 OTP
-        const otp = generateOtp();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-        // 🔹 SAVE SUPER ADMIN
-        const newSuperAdmin = await SuperAdminModel.create({
-            name,
-            email,
-            password: hashpassword,
-            otp,
-            otpExpiry,
-            otpLastSentAt: Date.now(),
-            otpLastSent: true,
-        });
-
-        // 🔹 SEND OTP
-        await sendMailOtp(email, otp);
-
-        res.status(201).json({
-            success: true,
-            message: "Super Admin registered successfully. OTP sent.",
-            superAdmin: {
-                id: newSuperAdmin._id,
-                name: newSuperAdmin.name,
-                email: newSuperAdmin.email,
-            },
-        });
-    } catch (error) {
-        console.error("Super Admin Register Error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error",
-        });
+    // 🔹 BASIC REQUIRED CHECK
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
+
+    // 🔹 NAME VALIDATION
+    if (!validator.isLength(name, { min: 3 })) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 3 characters",
+      });
+    }
+
+    // 🔹 EMAIL VALIDATION
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    // 🔹 PASSWORD VALIDATION
+    if (
+      !validator.isStrongPassword(password, {
+        minLength: 6,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+      })
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 6 please match the password policy",
+      });
+    }
+
+    // 🔹 DUPLICATE CHECK
+    const existingAdmin = await SuperAdminModel.findOne({ email });
+    if (existingAdmin) {
+      return res.status(409).json({
+        success: false,
+        message: "Admin already exists",
+      });
+    }
+
+    // 🔹 SUPER ADMIN LIMIT
+    const superAdminCount = await SuperAdminModel.countDocuments();
+    if (superAdminCount >= 2) {
+      return res.status(403).json({
+        success: false,
+        message: "Super Admin limit reached",
+      });
+    }
+
+    // 🔹 HASH PASSWORD
+    const hashpassword = await bcrypt.hash(password, 10);
+
+    // 🔹 OTP
+    const otp = generateOtp();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    // 🔹 SAVE SUPER ADMIN
+    const newSuperAdmin = await SuperAdminModel.create({
+      name,
+      email,
+      password: hashpassword,
+      otp,
+      otpExpiry,
+      otpLastSentAt: Date.now(),
+      otpLastSent: true,
+    });
+
+    // 🔹 SEND OTP
+    await sendMailOtp(email, otp);
+
+    res.status(201).json({
+      success: true,
+      message: "Super Admin registered successfully. OTP sent.",
+      superAdmin: {
+        id: newSuperAdmin._id,
+        name: newSuperAdmin.name,
+        email: newSuperAdmin.email,
+      },
+    });
+  } catch (error) {
+    console.error("Super Admin Register Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
 };
 
 const superAdminLogin = async (req, res) => {
@@ -153,24 +154,25 @@ const superAdminLogin = async (req, res) => {
     await superAdmin.save();
 
     res.cookie("accessToken", accessTokenValue, {
-       httpOnly: true,
+      httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-      path: "/",
+      maxAge: 24 * 15 * 60 * 1000,
+
     });
 
     res.cookie("refreshToken", refreshTokenValue, {
-       httpOnly: true,
+      httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-      path: "/",
+      maxAge: 7 * 24 * 15 * 60 * 1000,
     });
 
     res.status(200).json({
       success: true,
       message: "Super Admin logged in successfully",
-      // accessToken: accessTokenValue,
-      // refreshToken: refreshTokenValue,
+      accessToken: accessTokenValue,
+      refreshToken: refreshTokenValue,
       superAdmin: {
         id: superAdmin._id,
         name: superAdmin.name,
@@ -184,84 +186,108 @@ const superAdminLogin = async (req, res) => {
 };
 
 
- 
-const superAdminLogout = async(req,res)=>{
-    try {
-        const userId = req.userId;
-        const superAdmin = await SuperAdminModel.findById(userId);
-        if (!superAdmin) return res.status(404).json({ message: "Unauthorized" });
-        // invalidate refresh token in DB
-        superAdmin.isLoggedIn = false;
-        superAdmin.token = ""; // clear refresh token
-        await superAdmin.save();
-        const cookieOptions = {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
-        };
-        // clear cookies
-        res.clearCookie("accessToken", cookieOptions);
-        res.clearCookie("refreshToken", cookieOptions);
-        res.status(200).json({ message: "Super Admin logged out successfully" });
-    } catch (error) {
-        console.log("Logout error:");
-        return res.status(500).json({ message: "Server Error" });
-        
-    }
+
+const superAdminLogout = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const superAdmin = await SuperAdminModel.findById(userId);
+    if (!superAdmin) return res.status(404).json({ message: "Unauthorized" });
+    // invalidate refresh token in DB
+    superAdmin.isLoggedIn = false;
+    superAdmin.token = ""; // clear refresh token
+    await superAdmin.save();
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+    };
+    // clear cookies
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+    res.status(200).json({ message: "Super Admin logged out successfully" });
+  } catch (error) {
+    console.log("Logout error:");
+    return res.status(500).json({ message: "Server Error" });
+
+  }
 }
 
 const superAdminProfile = async (req, res) => {
-    try {
-        const userId = req.userId;
-        const superAdmin = await SuperAdminModel.findById(userId);
-        if (!superAdmin) return res.status(404).json({ message: "Unauthorized" });
-        res.status(200).json({
-            success: true,
-            superAdmin: {
-                id: superAdmin._id,
-                name: superAdmin.name,
-                email: superAdmin.email,
-            },
-        });
-    } catch (error) {
-        console.error("Super Admin Profile Error:", error);
-        res.status(500).json({ message: "Server Error" });
-    }
+  try {
+    const userId = req.userId;
+    const superAdmin = await SuperAdminModel.findById(userId);
+    if (!superAdmin) return res.status(404).json({ message: "Unauthorized" });
+    res.status(200).json({
+      success: true,
+      superAdmin: {
+        id: superAdmin._id,
+        name: superAdmin.name,
+        email: superAdmin.email,
+      },
+    });
+  } catch (error) {
+    console.error("Super Admin Profile Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
 
-const superAdminVerifyOtp = async(req,res)=>{
-    try {
-        const{email,otp}=req.body;
-        if(!email||!otp){
-            return res.status(400).json({message:"OTP is required"})
+const superAdminVerifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "OTP is required" })
 
-        }
-        const superAdmin = await SuperAdminModel.findOne({email});
-        if(!superAdmin){
-            return res.status(404).json({message:"Super Admin not found"})
-        }
-    
-        
-        if(superAdmin.isVerified){
-            return res.status(400).json({message:"Super Admin already verified"})
-        }
-        if(superAdmin.otpExpiry<Date.now()){
-            return res.status(400).json({message:"OTP expired"})
-        }
-        if(String(superAdmin.otp) !== String(otp)){
-            return res.status(400).json({message:"Invalid OTP"})
-        }
-        superAdmin.isEmailVerified = true;
-        superAdmin.isVerified = true;
-        superAdmin.otp = null;
-        superAdmin.otpExpiry = null;
-        await superAdmin.save();
-        res.status(200).json({message:"Super Admin verified successfully"})
-        
-    } catch (error) {
-        console.error("Super Admin Verify OTP Error:")
-        return res.status(500).json({message:"Server Error"})
     }
+    const superAdmin = await SuperAdminModel.findOne({ email });
+    if (!superAdmin) {
+      return res.status(404).json({ message: "Super Admin not found" })
+    }
+
+
+    if (superAdmin.isVerified) {
+      return res.status(400).json({ message: "Super Admin already verified" })
+    }
+    if (superAdmin.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" })
+    }
+    if (String(superAdmin.otp) !== String(otp)) {
+      return res.status(400).json({ message: "Invalid OTP" })
+    }
+    superAdmin.isEmailVerified = true;
+    superAdmin.isVerified = true;
+    superAdmin.otp = null;
+    superAdmin.otpExpiry = null;
+    await superAdmin.save();
+    res.status(200).json({ message: "Super Admin verified successfully" })
+
+  } catch (error) {
+    console.error("Super Admin Verify OTP Error:")
+    return res.status(500).json({ message: "Server Error" })
+  }
+}
+
+
+const superAdminVerifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "All fields are required" })
+    }
+    const superAdmin = await SuperAdminModel.findOne({ email });
+    if (!superAdmin) {
+      return res.status(404).json({ message: "Super Admin not found" })
+    }
+    if (superAdmin.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" })
+    }
+    if (String(superAdmin.otp) !== String(otp)) {
+      return res.status(400).json({ message: "Invalid OTP" })
+    }
+    res.status(200).json({ message: "OTP verified successfully" })
+  } catch (error) {
+    console.error("Super Admin Verify OTP Error:")
+    return res.status(500).json({ message: "Server Error" })
+  }
 }
 const superAdminOtpResend = async (req, res) => {
   try {
@@ -337,9 +363,12 @@ const SuperAdminReSetPassword = async (req, res) => {
 
     const user = await SuperAdminModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "Invalid OTP" });
+      return res.status(404).json({ message: "Invalid credentials" });
     }
-
+    
+    if (!user.otp || String(user.otp) !== String(otp)) {
+  return res.status(400).json({ message: "Invalid OTP" });
+}
     if (user.otpExpiry < Date.now()) {
       return res.status(400).json({ message: "OTP expired" });
     }
@@ -426,7 +455,6 @@ const superAdminrefreshTokenHandler = async (req, res) => {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-        path: "/",
       maxAge: 24 * 15 * 60 * 1000,
     });
 
@@ -434,7 +462,7 @@ const superAdminrefreshTokenHandler = async (req, res) => {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-        path: "/",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -448,64 +476,64 @@ const superAdminrefreshTokenHandler = async (req, res) => {
 
 
 const getpendingvendors = async (req, res) => {
-    try {
-        const pendingVendors = await VendorModel.find({ vendorAdminApproval: "pending" }).sort({ createdAt: -1 }).select("-password -otp -token");
-        res.status(200).json({
-            success: true,
-            vendors: pendingVendors,
-            count: pendingVendors.length
-        })
-    } catch (error) {
-        console.error("Get Pending Vendors Error:", error)
-        res.status(500).json({ message: "Server Error" })
+  try {
+    const pendingVendors = await VendorModel.find({ vendorAdminApproval: "pending" }).sort({ createdAt: -1 }).select("-password -otp -token");
+    res.status(200).json({
+      success: true,
+      vendors: pendingVendors,
+      count: pendingVendors.length
+    })
+  } catch (error) {
+    console.error("Get Pending Vendors Error:", error)
+    res.status(500).json({ message: "Server Error" })
 
-    }
+  }
 }
 
 const getapprovedvendors = async (req, res) => {
-    try {
-        const approvedVendors = await VendorModel.find({ vendorAdminApproval: "approved" }).sort({ createdAt: -1 }).select("-password -otp -token");
-        res.status(200).json({
-            success: true,
-            vendors: approvedVendors,
-            count: approvedVendors.length
-        })
-    } catch (error) {
-        console.error("Get Approved Vendors Error:", error)
-        res.status(500).json({ message: "Server Error" })
+  try {
+    const approvedVendors = await VendorModel.find({ vendorAdminApproval: "approved" }).sort({ createdAt: -1 }).select("-password -otp -token");
+    res.status(200).json({
+      success: true,
+      vendors: approvedVendors,
+      count: approvedVendors.length
+    })
+  } catch (error) {
+    console.error("Get Approved Vendors Error:", error)
+    res.status(500).json({ message: "Server Error" })
 
-    }
+  }
 }
 
 const getrejectedvendors = async (req, res) => {
-    try {
-        const rejectedVendors = await VendorModel.find({ vendorAdminApproval: "rejected" }).sort({ createdAt: -1 }).select("-password -otp -token");
-        res.status(200).json({
-            success: true,
-            vendors: rejectedVendors,
-            count: rejectedVendors.length
-        })
-    } catch (error) {
-        console.error("Get Rejected Vendors Error:", error)
-        res.status(500).json({ message: "Server Error" })
+  try {
+    const rejectedVendors = await VendorModel.find({ vendorAdminApproval: "rejected" }).sort({ createdAt: -1 }).select("-password -otp -token");
+    res.status(200).json({
+      success: true,
+      vendors: rejectedVendors,
+      count: rejectedVendors.length
+    })
+  } catch (error) {
+    console.error("Get Rejected Vendors Error:", error)
+    res.status(500).json({ message: "Server Error" })
 
-    }
+  }
 }
 
 
 const getallvendors = async (req, res) => {
-    try {
-        const allVendors = await VendorModel.find().sort({ createdAt: -1 }).select("-password -otp -token");
-        res.status(200).json({
-            success: true,
-            vendors: allVendors,
-            count: allVendors.length
-        })
-    } catch (error) {
-        console.error("Get All Vendors Error:", error)
-        res.status(500).json({ message: "Server Error" })
+  try {
+    const allVendors = await VendorModel.find().sort({ createdAt: -1 }).select("-password -otp -token");
+    res.status(200).json({
+      success: true,
+      vendors: allVendors,
+      count: allVendors.length
+    })
+  } catch (error) {
+    console.error("Get All Vendors Error:", error)
+    res.status(500).json({ message: "Server Error" })
 
-    }
+  }
 }
 
 const superAdminApproveVendor = async (req, res) => {
@@ -513,26 +541,47 @@ const superAdminApproveVendor = async (req, res) => {
     const { vendorId } = req.params;
     const superAdminId = req.userId; // set from auth middleware
 
-    const vendor = await VendorModel.findOne({vendorId});
+    const vendor = await VendorModel.findOne({ vendorId });
 
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
 
-   if (vendor.vendorAdminApproval === "approved") {
-  return res.status(400).json({
-    message: "Vendor is already approved",
-  });
-}
+    if (vendor.vendorAdminApproval === "approved") {
+      return res.status(400).json({
+        message: "Vendor is already approved",
+      });
+    }
 
-
+        // 🔹 UPDATE VENDOR APPROVAL STATUS
 
     vendor.vendorAdminApproval = "approved";
     vendor.vendorAdminApprovedby = superAdminId;
     vendor.vendorAdminApprovedAt = new Date();
     vendor.vendorAdminRejectedReason = ""
 
+     const Free_Plan_Stall_Limit = 5;
+     const licenses = [];
+    
+    for (let i = 0; i < Free_Plan_Stall_Limit; i++) {
+      const licenseId = generateLicenseId(vendor.mallName);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days from now
 
+      licenses.push({
+        licenseId,
+        mallName: vendor.mallName,
+        isUsed: false,
+        usedAt: null,
+        category: null,
+        usedForShopId: null,
+        generatedAt: new Date(),
+        expiresAt,
+        isActive: true,
+        isExpired: false
+      });
+    }
+    vendor.stallLicenses = licenses;
     await vendor.save();
 
     await sendMailVendorApproved(vendor.email, vendor.name);
@@ -550,21 +599,21 @@ const superAdminApproveVendor = async (req, res) => {
 };
 
 const superAdminRejectVendor = async (req, res) => {
-   try {
-     const { vendorId } = req.params;
+  try {
+    const { vendorId } = req.params;
     const superAdminId = req.userId; // set from auth middleware
-    const vendor = await VendorModel.findOne({vendorId});
+    const vendor = await VendorModel.findOne({ vendorId });
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
-     if (vendor.vendorAdminApproval === "rejected") {
+    if (vendor.vendorAdminApproval === "rejected") {
       return res.status(400).json({
         message: "Vendor is already rejected",
       });
     }
     vendor.vendorAdminApproval = "rejected";
     vendor.vendorAdminApprovedby = superAdminId;
-    vendor.vendorAdminRejectedReason = req.body.reason||"Vendor rejected by Super Admin";
+    vendor.vendorAdminRejectedReason = req.body.reason || "Vendor rejected by Super Admin";
     vendor.vendorAdminRejectedAt = new Date();
     vendor.vendorAdminApprovedAt = null;
     await vendor.save();
@@ -574,18 +623,18 @@ const superAdminRejectVendor = async (req, res) => {
       message: "Vendor rejected successfully",
       vendorId: vendor._id,
     });
-   } catch (error) {
+  } catch (error) {
     console.error("Reject Vendor Error:", error);
     res.status(500).json({ message: "Server Error" });
-    
-   }
-    
+
+  }
+
 }
 
 const getSingleVendor = async (req, res) => {
   try {
     const { vendorId } = req.params;
-    const vendor = await VendorModel.findOne({vendorId}).select("-password -otp -token");
+    const vendor = await VendorModel.findOne({ vendorId }).select("-password -otp -token");
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
@@ -597,22 +646,26 @@ const getSingleVendor = async (req, res) => {
 };
 
 
+
+
+
 export {
-    getpendingvendors,
-    getapprovedvendors,
-    getrejectedvendors,
-    getallvendors,
-    superAdminRegister,
-    superAdminLogin,
-    SuperAdminchangePassword,
-    SuperAdminforgotPassword,
-    SuperAdminReSetPassword,
-    superAdminVerifyOtp,
-    superAdminOtpResend,
-    superAdminProfile,
-    superAdminLogout,
-    superAdminrefreshTokenHandler ,
-    superAdminApproveVendor,
-    superAdminRejectVendor,
-    getSingleVendor
+  getpendingvendors,
+  getapprovedvendors,
+  getrejectedvendors,
+  getallvendors,
+  superAdminRegister,
+  superAdminLogin,
+  SuperAdminchangePassword,
+  SuperAdminforgotPassword,
+  SuperAdminReSetPassword,
+  superAdminVerifyOtp,
+  superAdminVerifyForgotPasswordOtp,
+  superAdminOtpResend,
+  superAdminProfile,
+  superAdminLogout,
+  superAdminrefreshTokenHandler,
+  superAdminApproveVendor,
+  superAdminRejectVendor,
+  getSingleVendor
 }

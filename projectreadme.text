@@ -6,3 +6,83 @@
 
 
 
+import { generateShopId } from "./idGenerator.js";
+
+const createStallWithLicense = async (req, res) => {
+  try {
+    const { licenseId, shopName, category } = req.body;
+    const vendorId = req.userId;
+
+    if (!licenseId || !shopName || !category) {
+      return res.status(400).json({
+        message: "License ID, shop name and category are required"
+      });
+    }
+
+    const vendor = await VendorModel.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    if (vendor.vendorAdminApproval !== "approved") {
+      return res.status(403).json({ message: "Vendor not approved yet" });
+    }
+
+    // 🔹 FIND LICENSE
+    const license = vendor.stallLicenses.find(
+      l => l.licenseId === licenseId
+    );
+
+    if (!license) {
+      return res.status(404).json({ message: "License not found" });
+    }
+
+    if (license.isUsed) {
+      return res.status(400).json({ message: "License already used" });
+    }
+
+    if (!license.isActive || license.isExpired || new Date() > license.expiresAt) {
+      return res.status(400).json({ message: "License not valid" });
+    }
+
+    // 🔹 ASSIGN CATEGORY TO LICENSE (ONCE)
+    license.category = category;   // ✅ IMPORTANT LINE
+
+    // 🔹 CREATE SHOP
+    const shopId = generateShopId(shopName);
+
+    const newShop = {
+      shopId,
+      shopName,
+      mallName: vendor.mallName,
+      category,                     // same category
+      licenseId: license.licenseId,
+      approvalStatus: "approved",
+      isActive: true,
+      createdAt: new Date()
+    };
+
+    vendor.shops.push(newShop);
+
+    // 🔹 MARK LICENSE USED
+    license.isUsed = true;
+    license.usedAt = new Date();
+    license.usedForShopId = shopId;
+
+    await vendor.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Stall created & license category assigned",
+      shop: newShop,
+      licenseUsed: {
+        licenseId: license.licenseId,
+        category: license.category
+      }
+    });
+
+  } catch (error) {
+    console.error("Create Stall Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};

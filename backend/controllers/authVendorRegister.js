@@ -54,7 +54,7 @@ const vendorRegister = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    if (!validator.isMobilePhone(phoneNumber, "en-IN")) {
+    if (!validator.isMobilePhone(phoneNumber, "any")) {
       return res.status(400).json({ message: "Invalid phone number" });
     }
 
@@ -92,6 +92,9 @@ const vendorRegister = async (req, res) => {
     for (const file of shopFiles) {
       const result = await cloudinary.uploader.upload(file.path, {
         folder: "vendor_shop_images",
+        use_filename: true,
+        unique_filename: true,
+        resource_type: "image"
       });
       uploadedShopImages.push(result.secure_url);
     }
@@ -203,6 +206,7 @@ try {
 
    vendor.token = refreshTokens
    vendor.isLoggedIn = true
+   vendor.vendorAdminIsActive = true
    await vendor.save()
    res.cookie("accessToken",accessTokens,{
     httpOnly:true,
@@ -286,6 +290,28 @@ const vendorVerifyOtp = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+const VendorVerifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "All fields are required" })
+    }
+    const Admin = await VendorModel.findOne({ email });
+    if (!Admin) {
+      return res.status(404).json({ message: "Super Admin not found" })
+    }
+    if (Admin.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" })
+    }
+    if (String(Admin.otp) !== String(otp)) {
+      return res.status(400).json({ message: "Invalid OTP" })
+    }
+    res.status(200).json({ message: "OTP verified successfully" })
+  } catch (error) {
+    console.error("Super Admin Verify OTP Error:")
+    return res.status(500).json({ message: "Server Error" })
+  }
+}
 
 const vendorResendOtp = async (req, res) => {
   try {
@@ -470,12 +496,51 @@ const vendorRefreshToken = async (req, res) => {
 };
 
 
+const vendorAdminProfile = async(req,res)=>{
+  try {
+    const userId = req.userId
+    const vendor = await VendorModel.findById(userId)
+    if(!vendor){
+      return res.status(404).json({message:"Unauthorized"})
+    }
+    res.status(200).json({
+      success:true,
+      data:{
+        vendorId:vendor.vendorId,
+        name:vendor.name,
+        email:vendor.email,
+      },
+    });
+
+    
+  } catch (error) {
+    console.error("Error fetching vendor profile:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
+const createStallWithLicense = async(req,res)=>{
+  try {
+    const {licenseId,shopName,category}= req.body
+    const vendorId = req.userId
+
+    if(!licenseId || !shopName || !category){
+      
+    }
+
+    
+  } catch (error) {
+    
+  }
+}
+
+
 
 
 
 
 export { vendorRegister, vendorLogin,
    vendorLogout, vendorVerifyOtp, 
+   VendorVerifyForgotPasswordOtp,
    vendorResetPassword, forgotPassword,
     vendorRefreshToken, vendorChangePassword,
-     vendorResendOtp };
+     vendorResendOtp,vendorAdminProfile };

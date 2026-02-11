@@ -15,7 +15,7 @@ import {
     superAdminLogout,
     superAdminrefreshTokenHandler,
     superAdminApproveVendor,
-    getSingleVendor,superAdminRejectVendor
+    getSingleVendor,superAdminRejectVendor,superAdminVerifyForgotPasswordOtp
 } from '../controllers/superAdminController.js'
 import superadminauth from '../middlewares/superadminauth.js';
 const superAdminRouter = express.Router();
@@ -27,6 +27,7 @@ superAdminRouter.post('/super-admin-verify-otp', superAdminVerifyOtp)
 superAdminRouter.post('/super-admin-resend-otp', superAdminOtpResend)
 superAdminRouter.post('/super-admin-logout',superAdminauth, superAdminLogout)
 superAdminRouter.post('/super-admin-forgot-password', SuperAdminforgotPassword)
+superAdminRouter.post('/super-admin-verify-forgot-password-otp',superAdminVerifyForgotPasswordOtp)
 superAdminRouter.post('/super-admin-reset-password', SuperAdminReSetPassword)
 superAdminRouter.post('/super-admin-change-password',superAdminauth, SuperAdminchangePassword)
 superAdminRouter.get('/super-admin-profile',superAdminauth, superAdminProfile)

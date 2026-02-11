@@ -1,5 +1,5 @@
 import express from "express";
-import { vendorRegister, vendorLogin, vendorLogout, vendorVerifyOtp, vendorResetPassword, forgotPassword, vendorRefreshToken, vendorResendOtp, vendorChangePassword } from "../controllers/authVendorRegister.js";
+import { vendorRegister, vendorLogin, vendorAdminProfile, vendorLogout, vendorVerifyOtp, vendorResetPassword, forgotPassword, vendorRefreshToken, vendorResendOtp, vendorChangePassword,VendorVerifyForgotPasswordOtp } from "../controllers/authVendorRegister.js";
 import {userProfileUpload}  from "../middlewares/Multer.js"; 
 import vendorauth from "../middlewares/vendorauth.js";
 import rateLimit from "express-rate-limit";
@@ -26,7 +26,9 @@ vendorRouter.post('/vendor-refresh-token',vendorRefreshToken)
 vendorRouter.post('/vendor-login',authLimiter,vendorLogin)
 vendorRouter.post('/vendor-logout',vendorauth,vendorLogout)
 vendorRouter.post('/vendor-verify-otp',authLimiter,vendorVerifyOtp)
+vendorRouter.post('/vendor-verify-forgot-password-otp',authLimiter,VendorVerifyForgotPasswordOtp)
 vendorRouter.post('/vendor-resend-otp',authLimiter,vendorResendOtp)
+vendorRouter.get('/vendor-admin-profile',vendorauth,vendorAdminProfile)
 
 //password
 vendorRouter.post('/vendor-reset-password',authLimiter,vendorResetPassword)

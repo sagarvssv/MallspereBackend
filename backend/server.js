@@ -7,6 +7,7 @@ import connectDB from "./config/db.js";
 import helmet from "helmet";
 import vendorRouter from "./routes/vendorRoute.js";
 import superAdminRouter from "./routes/superAdminRoutes.js";
+import sellerRouter from "./routes/sellerRoute.js";
 
 
 
@@ -48,6 +49,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", userRouter); 
 app.use('/api/auth',vendorRouter);
 app.use('/api/super-admin',superAdminRouter)
+app.use('/api/seller',sellerRouter);
 
 // Test route
 app.get("/", (req, res) => {
