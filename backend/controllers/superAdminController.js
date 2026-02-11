@@ -283,6 +283,11 @@ const superAdminVerifyForgotPasswordOtp = async (req, res) => {
     if (String(superAdmin.otp) !== String(otp)) {
       return res.status(400).json({ message: "Invalid OTP" })
     }
+
+      superAdmin.otp = null;
+    superAdmin.otpExpiry = null;
+
+    await superAdmin.save();
     res.status(200).json({ message: "OTP verified successfully" })
   } catch (error) {
     console.error("Super Admin Verify OTP Error:")
